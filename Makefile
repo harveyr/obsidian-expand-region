@@ -1,3 +1,4 @@
+# This is where I'm testing out the plugin locally.
 local_dest_path = ~/tmp/ObsidianDev/.obsidian/plugins/obsidian-expand-region/
 
 .PHONY: dev
