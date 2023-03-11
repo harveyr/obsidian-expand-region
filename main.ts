@@ -1,21 +1,20 @@
-import {
-	Editor,
-	EditorPosition,
-	EditorSelection,
-	MarkdownView,
-	Plugin,
-} from "obsidian";
+import { Editor, EditorPosition, MarkdownView, Plugin } from "obsidian";
 
 interface Surround {
 	start: string;
 	end?: string;
 }
 
+enum HorizontalDirection {
+	Left = -1,
+	Right = 1,
+}
+
 const SURROUNDS: Surround[] = [
+	{ start: "[", end: "]" },
+	{ start: "(", end: ")" },
 	{ start: " " },
 	{ start: "-" },
-	{ start: "(", end: ")" },
-	{ start: "[", end: "]" },
 ];
 
 export default class MyPlugin extends Plugin {
@@ -102,16 +101,47 @@ function expand(line: string, start: number, end: number): number[] {
 		console.log("found right surround with", line[newEnd]);
 	}
 
-	if (leftSurround && !rightSurround) {
-		console.log("expand right with left's surround");
-		newEnd = expandToSurround(line, newEnd, leftSurround, 1);
-		// Move the cursor position to the end of the desired region (end + 1).
-	} else if (rightSurround && !leftSurround) {
-		console.log("expand left with right's surround");
-		newStart = expandToSurround(line, newStart, rightSurround, -1);
+	if (
+		leftSurround &&
+		rightSurround &&
+		leftSurround.rank === rightSurround.rank
+	) {
+		console.log("TODO: Same surround found on both ends");
+		return [newStart, newEnd];
+	}
+
+	if (
+		leftSurround &&
+		(!rightSurround || leftSurround.rank < rightSurround.rank)
+	) {
+		// The left-hand surround has a higher priority than the right. Expand right.
+		console.log("expanding right toward", leftSurround.surround);
+		newEnd = expandToSurround(
+			line,
+			newEnd,
+			leftSurround.surround,
+			HorizontalDirection.Right
+		);
+	} else if (
+		rightSurround &&
+		(!leftSurround || rightSurround.rank < leftSurround.rank)
+	) {
+		// The right-hand surround has a higher priority. Expand left.
+		console.log("expanding left toward", rightSurround.surround);
+		newStart = expandToSurround(
+			line,
+			newStart,
+			rightSurround.surround,
+			HorizontalDirection.Left
+		);
 	} else {
+		console.log("TODO: No priority surround found");
 		newStart = move({ index: newStart, direction: -1, limit: 0 });
-		newEnd = move({ index: newEnd, direction: 1, limit: line.length - 1 });
+		newEnd = move({
+			index: newEnd,
+			direction: 1,
+			limit: line.length - 1,
+		});
 
 		// Recursion! 😬
 		return expand(line, newStart, newEnd);
@@ -124,15 +154,19 @@ function expandToSurround(
 	line: string,
 	index: number,
 	surround: Surround,
-	direction: number
+	direction: HorizontalDirection
 ): number {
 	while (index > 0 && index < line.length - 1) {
 		index += direction;
 		const char = line[index];
-		if (direction === -1 && char === surround.start) {
+
+		if (direction === HorizontalDirection.Left && char === surround.start) {
 			break;
 		}
-		if (direction === 1 && (char === surround.end || surround.start)) {
+		if (
+			direction === HorizontalDirection.Right &&
+			(char === surround.end || surround.start)
+		) {
 			break;
 		}
 	}
@@ -140,14 +174,19 @@ function expandToSurround(
 	return index;
 }
 
-function findMatchingSurround(char: string): Surround | null {
-	// TODO: probably create and reuse a map for faster lookups
-	for (const s of SURROUNDS) {
-		if (s.start === char) {
-			return s;
-		}
-		if (s.end && s.end === char) {
-			return s;
+interface RankedSurround {
+	surround: Surround;
+	rank: number;
+}
+
+function findMatchingSurround(char: string): RankedSurround | null {
+	for (let i = 0; i < SURROUNDS.length; i++) {
+		const s = SURROUNDS[i];
+		if (s.start === char || (s.end && s.end === char)) {
+			return {
+				surround: s,
+				rank: i,
+			};
 		}
 	}
 
