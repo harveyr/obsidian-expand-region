@@ -47,8 +47,9 @@ export default class MyPlugin extends Plugin {
 		const newEnd = currSel.head.ch;
 
 		while (newStart > 0) {
-			const startChar = line[newStart];
-			if (isDelimiter(startChar)) {
+			const nextStart = line[newStart - 1];
+			// const startChar = line[newStart];
+			if (isDelimiter(nextStart)) {
 				break;
 			}
 			newStart--;
