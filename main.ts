@@ -79,6 +79,18 @@ function shiftHoriz(line: string, index: number, direction: Direction) {
 }
 
 function expand(line: string, start: number, end: number): number[] {
+	if (start === 0 && end === line.length - 1) {
+		console.debug("Can't expand further");
+		return [start, end];
+	}
+
+	if (start === 0 && end !== 0) {
+		// We're already have a selection beginning at the start and we've asked to expand.
+		// TODO: Handle expanding to end of sentence.
+		console.debug("Expanding to end of line");
+		return [0, line.length - 1];
+	}
+
 	let newStart = start;
 	let newEnd = end;
 
@@ -97,11 +109,12 @@ function expand(line: string, start: number, end: number): number[] {
 			rightSurround &&
 			leftSurround.rank === rightSurround.rank
 	);
-
 	const noRank = Boolean(!leftSurround && !rightSurround);
 
 	if (sameRank || noRank) {
 		console.debug("Surrounds have same rank or no rank");
+
+		// Expand in each direction
 		newStart = shiftHoriz(line, newStart, Direction.Left);
 		newEnd = shiftHoriz(line, newEnd, Direction.Right);
 
