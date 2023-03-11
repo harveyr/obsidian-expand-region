@@ -112,14 +112,13 @@ function expand(line: string, start: number, end: number): number[] {
 	const noRank = Boolean(!leftSurround && !rightSurround);
 
 	if (sameRank || noRank) {
-		console.debug("Surrounds have same rank or no rank");
-
-		// Expand in each direction
+		console.debug(
+			"Surrounds have same rank or no rank. Expanding in both directions."
+		);
 		newStart = shiftHoriz(line, newStart, Direction.Left);
 		newEnd = shiftHoriz(line, newEnd, Direction.Right);
 
 		console.debug("Recursing with", newStart, newEnd);
-
 		return expand(line, newStart, newEnd);
 	}
 
@@ -129,10 +128,10 @@ function expand(line: string, start: number, end: number): number[] {
 	) {
 		// The left-hand surround has a higher priority than the right. Expand right.
 		console.log("expanding right toward", leftSurround.surround);
-		newEnd = expandToSurround(
+		newEnd = expandTo(
 			line,
 			newEnd,
-			leftSurround.surround,
+			leftSurround.surround.end,
 			Direction.Right
 		);
 	} else if (
@@ -141,10 +140,10 @@ function expand(line: string, start: number, end: number): number[] {
 	) {
 		// The right-hand surround has a higher priority. Expand left.
 		console.log("expanding left toward", rightSurround.surround);
-		newStart = expandToSurround(
+		newStart = expandTo(
 			line,
 			newStart,
-			rightSurround.surround,
+			rightSurround.surround.start,
 			Direction.Left
 		);
 	} else {
@@ -154,23 +153,22 @@ function expand(line: string, start: number, end: number): number[] {
 	return [newStart, newEnd];
 }
 
-function expandToSurround(
+function expandTo(
 	line: string,
 	index: number,
-	surround: Surround,
+	target: string,
 	direction: Direction
 ): number {
 	if (direction === Direction.Right) {
-		const hit = line.indexOf(surround.end, index);
+		const hit = line.indexOf(target, index);
 		if (hit >= 0) {
 			// We want the cursor to be just before the delimeter.
 			index = hit - 1;
 		}
 	} else {
-		const char = surround.start;
 		while (index > 0) {
 			index--;
-			if (line[index] === char) {
+			if (line[index] === target) {
 				break;
 			}
 		}
