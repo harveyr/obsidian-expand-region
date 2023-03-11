@@ -1,20 +1,20 @@
 import { Editor, EditorPosition, MarkdownView, Plugin } from "obsidian";
 
-interface Surround {
-	start: string;
-	end?: string;
-}
-
 enum HorizontalDirection {
 	Left = -1,
 	Right = 1,
 }
 
+interface Surround {
+	start: string;
+	end: string;
+}
+
 const SURROUNDS: Surround[] = [
 	{ start: "[", end: "]" },
 	{ start: "(", end: ")" },
-	{ start: " " },
-	{ start: "-" },
+	{ start: " ", end: " " },
+	{ start: "-", end: "-" },
 ];
 
 export default class MyPlugin extends Plugin {
@@ -157,18 +157,18 @@ function expandToSurround(
 	surround: Surround,
 	direction: HorizontalDirection
 ): number {
-	while (index > 0 && index < line.length - 1) {
-		index += direction;
-		const char = line[index];
-
-		if (direction === HorizontalDirection.Left && char === surround.start) {
-			break;
+	if (direction === HorizontalDirection.Right) {
+		const hit = line.indexOf(surround.end, index);
+		if (hit >= 0) {
+			index = hit;
 		}
-		if (
-			direction === HorizontalDirection.Right &&
-			(char === surround.end || surround.start)
-		) {
-			break;
+	} else {
+		const char = surround.start;
+		while (index > 0) {
+			index--;
+			if (line[index] === char) {
+				break;
+			}
 		}
 	}
 
