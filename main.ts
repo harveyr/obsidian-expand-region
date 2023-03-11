@@ -49,10 +49,11 @@ export default class MyPlugin extends Plugin {
 
 		if (currSel.anchor.ch === currSel.head.ch) {
 			console.log("TODO: using the old way");
-			// TODO: Status: old way is not expanding left
 			newStart = getExpandedBoundary(line, newStart, -1, 0);
 			newEnd = getExpandedBoundary(line, newEnd, 1, line.length - 1);
 		} else {
+			// TODO: Status - handling `[kaldkf` — both sides have a surround.
+			// Need to prioritize the right-hand expansion.
 			const result = expand(line, currSel.anchor.ch, currSel.head.ch);
 			newStart = result[0];
 			newEnd = result[1];
@@ -93,7 +94,13 @@ function expand(line: string, start: number, end: number): number[] {
 	let newEnd = end;
 
 	const leftSurround = findMatchingSurround(line[newStart]);
+	if (leftSurround) {
+		console.log("found left surround with", line[newStart]);
+	}
 	const rightSurround = findMatchingSurround(line[newEnd]);
+	if (rightSurround) {
+		console.log("found right surround with", line[newEnd]);
+	}
 
 	if (leftSurround && !rightSurround) {
 		console.log("expand right with left's surround");
