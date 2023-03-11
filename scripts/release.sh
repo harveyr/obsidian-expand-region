@@ -8,3 +8,6 @@ npm version patch
 
 id=$(jq --raw-output '.id' manifest.json)
 
+echo "Creating release ${id}"
+
+gh release create "v${id} main.ts manifest.json"
