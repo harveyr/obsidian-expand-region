@@ -22,7 +22,7 @@ const SURROUNDS: Surround[] = [
 
 const DELIMITERS = [":", "/", "\\", ".", " ", "_"];
 
-export default class MyPlugin extends Plugin {
+export default class ExpandRegionPlugin extends Plugin {
 	async onload() {
 		// This adds an editor command that can perform some operation on the current editor instance
 		this.addCommand({
