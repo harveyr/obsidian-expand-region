@@ -44,16 +44,30 @@ export default class MyPlugin extends Plugin {
 		const line = editor.getLine(currSel.anchor.line);
 
 		let newStart = currSel.anchor.ch;
-		const newEnd = currSel.head.ch;
+		let newEnd = currSel.head.ch;
+
+		// Prepping to get DRY
+		let direction = -1;
 
 		while (newStart > 0) {
-			const nextStart = line[newStart - 1];
-			// const startChar = line[newStart];
-			if (isDelimiter(nextStart)) {
+			const next = line[newStart + direction];
+			if (isDelimiter(next)) {
 				break;
 			}
-			newStart--;
+			newStart += direction;
 		}
+
+		direction = 1;
+		while (newEnd < line.length - 1) {
+			const next = line[newEnd + direction];
+			if (isDelimiter(next)) {
+				break;
+			}
+			newEnd += direction;
+		}
+
+		// Move the cursor position to the end of the desired region (end + 1)
+		newEnd = Math.min(line.length - 1, newEnd + 1);
 
 		// const line = editor.getCursor
 		// editor.replaceSelection("Sample Editor Command");
