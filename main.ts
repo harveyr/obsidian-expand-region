@@ -1,6 +1,6 @@
 import { Editor, EditorPosition, MarkdownView, Plugin } from "obsidian";
 
-enum HorizontalDirection {
+enum Direction {
 	Left = -1,
 	Right = 1,
 }
@@ -74,18 +74,8 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-interface MoveArg {
-	index: number;
-	direction: number;
-	limit: number;
-}
-
-function move(arg: MoveArg) {
-	const { index, direction, limit } = arg;
-	if (index === limit) {
-		return index;
-	}
-	return index + direction;
+function shiftHoriz(line: string, index: number, direction: Direction) {
+	return Math.min(line.length - 1, Math.max(0, index + direction));
 }
 
 function expand(line: string, start: number, end: number): number[] {
@@ -95,20 +85,29 @@ function expand(line: string, start: number, end: number): number[] {
 	// Look at the character to the left of the cursor.
 	const leftSurround = findMatchingSurround(line[newStart - 1]);
 	if (leftSurround) {
-		console.log("found left surround with '%s'", line[newStart]);
+		console.debug("found left surround", leftSurround.surround);
 	}
 	const rightSurround = findMatchingSurround(line[newEnd]);
 	if (rightSurround) {
-		console.log("found right surround with '%s'", line[newEnd]);
+		console.debug("found right surround", rightSurround.surround);
 	}
 
-	if (
+	const sameRank = Boolean(
 		leftSurround &&
-		rightSurround &&
-		leftSurround.rank === rightSurround.rank
-	) {
-		console.log("TODO: Same surround found on both ends");
-		return [newStart, newEnd];
+			rightSurround &&
+			leftSurround.rank === rightSurround.rank
+	);
+
+	const noRank = Boolean(!leftSurround && !rightSurround);
+
+	if (sameRank || noRank) {
+		console.debug("Surrounds have same rank or no rank");
+		newStart = shiftHoriz(line, newStart, Direction.Left);
+		newEnd = shiftHoriz(line, newEnd, Direction.Right);
+
+		console.debug("Recursing with", newStart, newEnd);
+
+		return expand(line, newStart, newEnd);
 	}
 
 	if (
@@ -121,7 +120,7 @@ function expand(line: string, start: number, end: number): number[] {
 			line,
 			newEnd,
 			leftSurround.surround,
-			HorizontalDirection.Right
+			Direction.Right
 		);
 	} else if (
 		rightSurround &&
@@ -133,19 +132,10 @@ function expand(line: string, start: number, end: number): number[] {
 			line,
 			newStart,
 			rightSurround.surround,
-			HorizontalDirection.Left
+			Direction.Left
 		);
 	} else {
-		console.log("TODO: No priority surround found");
-		newStart = move({ index: newStart, direction: -1, limit: 0 });
-		newEnd = move({
-			index: newEnd,
-			direction: 1,
-			limit: line.length - 1,
-		});
-
-		// Recursion! 😬
-		return expand(line, newStart, newEnd);
+		console.error("FIXME: How did I get here?");
 	}
 
 	return [newStart, newEnd];
@@ -155,9 +145,9 @@ function expandToSurround(
 	line: string,
 	index: number,
 	surround: Surround,
-	direction: HorizontalDirection
+	direction: Direction
 ): number {
-	if (direction === HorizontalDirection.Right) {
+	if (direction === Direction.Right) {
 		const hit = line.indexOf(surround.end, index);
 		if (hit >= 0) {
 			// We want the cursor to be just before the delimeter.
