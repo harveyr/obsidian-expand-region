@@ -6,6 +6,7 @@ import {
 	Plugin,
 } from "obsidian";
 import { cursorTo } from "readline";
+import * as internal from "stream";
 
 // Remember to rename these classes and interfaces!
 
@@ -34,7 +35,6 @@ export default class MyPlugin extends Plugin {
 		}
 
 		const currSel: EditorSelection = selections[0];
-		console.log("current selection", currSel);
 
 		if (currSel.anchor.line != currSel.head.line) {
 			console.log("I don't handle multiple lines yet");
@@ -44,7 +44,6 @@ export default class MyPlugin extends Plugin {
 		const line = editor.getLine(currSel.anchor.line);
 
 		let newStart = currSel.anchor.ch;
-		let newEnd = currSel.head.ch;
 
 		// Prepping to get DRY
 		let direction = -1;
@@ -58,19 +57,22 @@ export default class MyPlugin extends Plugin {
 		}
 
 		direction = 1;
-		while (newEnd < line.length - 1) {
-			const next = line[newEnd + direction];
-			if (isDelimiter(next)) {
-				break;
-			}
-			newEnd += direction;
-		}
+		// while (newEnd < line.length - 1) {
+		// 	const next = line[newEnd + direction];
+		// 	if (isDelimiter(next)) {
+		// 		break;
+		// 	}
+		// 	newEnd += direction;
+		// }
+		let newEnd = getExpandedBoundary(
+			line,
+			currSel.head.ch,
+			1,
+			line.length - 1
+		);
 
-		// Move the cursor position to the end of the desired region (end + 1)
+		// Move the cursor position to the end of the desired region (end + 1).
 		newEnd = Math.min(line.length - 1, newEnd + 1);
-
-		// const line = editor.getCursor
-		// editor.replaceSelection("Sample Editor Command");
 
 		const newAnchor: EditorPosition = {
 			line: currSel.anchor.line,
@@ -83,6 +85,25 @@ export default class MyPlugin extends Plugin {
 
 		editor.setSelection(newAnchor, newHead);
 	}
+}
+
+function getExpandedBoundary(
+	line: string,
+	currIdx: number,
+	direction: number,
+	limit: number
+): number {
+	let newIdx = currIdx;
+
+	while (newIdx < limit) {
+		const next = line[newIdx + direction];
+		if (isDelimiter(next)) {
+			break;
+		}
+		newIdx += direction;
+	}
+
+	return newIdx;
 }
 
 function isDelimiter(char: string): boolean {
