@@ -9,5 +9,4 @@ local_install:
 	mkdir -p $(local_dest_path)
 	cp main.js $(local_dest_path)
 	cp manifest.json $(local_dest_path)
-	cp styles.css $(local_dest_path)
 

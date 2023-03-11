@@ -203,8 +203,7 @@ function expandTo(
 	if (direction === Direction.Right) {
 		const hit = line.indexOf(target, index);
 		if (hit >= 0) {
-			// We want the region to end just before the delimiter.
-			index = hit - 1;
+			index = hit;
 		}
 	} else {
 		while (index > 0) {
