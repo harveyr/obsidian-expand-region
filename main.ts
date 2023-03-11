@@ -22,6 +22,8 @@ const SURROUNDS: Surround[] = [
 	{ start: "-", end: "-" },
 ];
 
+const DELIMITERS = [":", "/", "\\", "."];
+
 export default class MyPlugin extends Plugin {
 	async onload() {
 		// This adds an editor command that can perform some operation on the current editor instance
@@ -61,7 +63,8 @@ export default class MyPlugin extends Plugin {
 		const newHead: EditorPosition = {
 			line: currSel.anchor.line,
 			// Move the cursor position to the end of the desired region (end + 1).
-			ch: Math.min(line.length - 1, end + 1),
+			// ch: Math.min(line.length, end - 1),
+			ch: end,
 		};
 
 		editor.setSelection(newAnchor, newHead);
@@ -82,18 +85,21 @@ function expand(line: string, start: number, end: number): LineSelection {
 		// We're already have a selection beginning at the start and we've asked to expand.
 		// TODO: Handle expanding to end of sentence.
 		console.debug("Expanding to end of line");
-		return { start: 0, end: line.length - 1 };
+		return { start: 0, end: line.length };
 	}
 
 	let newStart = start;
 	let newEnd = end;
 
 	// Look at the character to the left of the cursor.
-	const leftSurround = findMatchingSurround(line[newStart - 1]);
+	const leftSurround = findMatchingSurround(
+		line[newStart - 1],
+		Direction.Left
+	);
 	if (leftSurround) {
 		console.debug("found left surround", leftSurround.surround);
 	}
-	const rightSurround = findMatchingSurround(line[newEnd]);
+	const rightSurround = findMatchingSurround(line[newEnd], Direction.Right);
 	if (rightSurround) {
 		console.debug("found right surround", rightSurround.surround);
 	}
@@ -160,22 +166,22 @@ interface LineSelection {
 function expandToWord(line: string, index: number): LineSelection {
 	console.debug("Expanding to word");
 
-	const result: LineSelection = { start: 0, end: line.length - 1 };
+	const result: LineSelection = { start: 0, end: line.length };
 
 	let start = index,
 		end = index;
 
 	while (start > 0) {
 		start--;
-		if (findMatchingSurround(line[start])) {
+		if (isDelimiter(line[start])) {
 			result.start = start + 1;
 			break;
 		}
 	}
 	while (end < line.length - 1) {
 		end++;
-		if (findMatchingSurround(line[end])) {
-			result.end = end - 1;
+		if (isDelimiter(line[end])) {
+			result.end = end;
 			break;
 		}
 	}
@@ -192,13 +198,15 @@ function expandTo(
 	if (direction === Direction.Right) {
 		const hit = line.indexOf(target, index);
 		if (hit >= 0) {
-			// We want the cursor to be just before the delimeter.
+			// We want the region to end just before the delimiter.
 			index = hit - 1;
 		}
 	} else {
 		while (index > 0) {
 			index--;
 			if (line[index] === target) {
+				// We want the region to start just after the delimiter.
+				index++;
 				break;
 			}
 		}
@@ -207,10 +215,20 @@ function expandTo(
 	return index;
 }
 
-function findMatchingSurround(char: string): RankedSurround | null {
+function findMatchingSurround(
+	char: string,
+	direction: Direction
+): RankedSurround | null {
 	for (let i = 0; i < SURROUNDS.length; i++) {
 		const s = SURROUNDS[i];
-		if (s.start === char || (s.end && s.end === char)) {
+
+		// Don't find a match unless it's directionally aware. E.g., if we're
+		// moving left, we want to find the opening character, not the
+		// terminating one.
+		if (
+			(direction === Direction.Left && s.start === char) ||
+			(direction === Direction.Right && s.end === char)
+		) {
 			return {
 				surround: s,
 				rank: i,
@@ -218,6 +236,15 @@ function findMatchingSurround(char: string): RankedSurround | null {
 		}
 	}
 
-	console.debug("No surround found for '%s'", char);
 	return null;
+}
+
+// Returns true if the character is any sort of delimiter.
+function isDelimiter(char: string): boolean {
+	return Boolean(
+		DELIMITERS.indexOf(char) >= 0 ||
+			SURROUNDS.find((s) => {
+				return s.start === char || s.end === char;
+			})
+	);
 }
