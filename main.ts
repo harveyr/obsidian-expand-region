@@ -92,13 +92,14 @@ function expand(line: string, start: number, end: number): number[] {
 	let newStart = start;
 	let newEnd = end;
 
-	const leftSurround = findMatchingSurround(line[newStart]);
+	// Look at the character to the left of the cursor.
+	const leftSurround = findMatchingSurround(line[newStart - 1]);
 	if (leftSurround) {
-		console.log("found left surround with", line[newStart]);
+		console.log("found left surround with '%s'", line[newStart]);
 	}
 	const rightSurround = findMatchingSurround(line[newEnd]);
 	if (rightSurround) {
-		console.log("found right surround with", line[newEnd]);
+		console.log("found right surround with '%s'", line[newEnd]);
 	}
 
 	if (
@@ -190,6 +191,7 @@ function findMatchingSurround(char: string): RankedSurround | null {
 		}
 	}
 
+	console.debug("No surround found for '%s'", char);
 	return null;
 }
 
