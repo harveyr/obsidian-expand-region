@@ -160,7 +160,8 @@ function expandToSurround(
 	if (direction === HorizontalDirection.Right) {
 		const hit = line.indexOf(surround.end, index);
 		if (hit >= 0) {
-			index = hit;
+			// We want the cursor to be just before the delimeter.
+			index = hit - 1;
 		}
 	} else {
 		const char = surround.start;
