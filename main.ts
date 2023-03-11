@@ -10,6 +10,11 @@ interface Surround {
 	end: string;
 }
 
+interface RankedSurround {
+	surround: Surround;
+	rank: number;
+}
+
 const SURROUNDS: Surround[] = [
 	{ start: "[", end: "]" },
 	{ start: "(", end: ")" },
@@ -43,31 +48,20 @@ export default class MyPlugin extends Plugin {
 		}
 
 		const line = editor.getLine(currSel.anchor.line);
-		let newStart: number = currSel.anchor.ch;
-		let newEnd: number = currSel.head.ch;
 
-		if (currSel.anchor.ch === currSel.head.ch) {
-			console.log("TODO: using the old way");
-			newStart = getExpandedBoundary(line, newStart, -1, 0);
-			newEnd = getExpandedBoundary(line, newEnd, 1, line.length - 1);
-		} else {
-			// TODO: Status - handling `[kaldkf` — both sides have a surround.
-			// Need to prioritize the right-hand expansion.
-			const result = expand(line, currSel.anchor.ch, currSel.head.ch);
-			newStart = result[0];
-			newEnd = result[1];
-		}
+		// TODO: tidy variables
 
-		// Move the cursor position to the end of the desired region (end + 1).
-		newEnd = Math.min(line.length - 1, newEnd + 1);
+		// Need to prioritize the right-hand expansion.
+		const { start, end } = expand(line, currSel.anchor.ch, currSel.head.ch);
 
 		const newAnchor: EditorPosition = {
 			line: currSel.anchor.line,
-			ch: newStart,
+			ch: start,
 		};
 		const newHead: EditorPosition = {
 			line: currSel.anchor.line,
-			ch: newEnd,
+			// Move the cursor position to the end of the desired region (end + 1).
+			ch: Math.min(line.length - 1, end + 1),
 		};
 
 		editor.setSelection(newAnchor, newHead);
@@ -78,17 +72,17 @@ function shiftHoriz(line: string, index: number, direction: Direction) {
 	return Math.min(line.length - 1, Math.max(0, index + direction));
 }
 
-function expand(line: string, start: number, end: number): number[] {
+function expand(line: string, start: number, end: number): LineSelection {
 	if (start === 0 && end === line.length - 1) {
-		console.debug("Can't expand further");
-		return [start, end];
+		console.debug("Can't [yet] beyond the full line");
+		return { start, end };
 	}
 
 	if (start === 0 && end !== 0) {
 		// We're already have a selection beginning at the start and we've asked to expand.
 		// TODO: Handle expanding to end of sentence.
 		console.debug("Expanding to end of line");
-		return [0, line.length - 1];
+		return { start: 0, end: line.length - 1 };
 	}
 
 	let newStart = start;
@@ -104,6 +98,11 @@ function expand(line: string, start: number, end: number): number[] {
 		console.debug("found right surround", rightSurround.surround);
 	}
 
+	const noSelection = start === end;
+	if (noSelection) {
+		return expandToWord(line, newStart);
+	}
+
 	const sameRank = Boolean(
 		leftSurround &&
 			rightSurround &&
@@ -111,7 +110,7 @@ function expand(line: string, start: number, end: number): number[] {
 	);
 	const noRank = Boolean(!leftSurround && !rightSurround);
 
-	if (sameRank || noRank) {
+	if (noSelection || sameRank || noRank) {
 		console.debug(
 			"Surrounds have same rank or no rank. Expanding in both directions."
 		);
@@ -150,7 +149,38 @@ function expand(line: string, start: number, end: number): number[] {
 		console.error("FIXME: How did I get here?");
 	}
 
-	return [newStart, newEnd];
+	return { start: newStart, end: newEnd };
+}
+
+interface LineSelection {
+	start: number;
+	end: number;
+}
+
+function expandToWord(line: string, index: number): LineSelection {
+	console.debug("Expanding to word");
+
+	const result: LineSelection = { start: 0, end: line.length - 1 };
+
+	let start = index,
+		end = index;
+
+	while (start > 0) {
+		start--;
+		if (findMatchingSurround(line[start])) {
+			result.start = start + 1;
+			break;
+		}
+	}
+	while (end < line.length - 1) {
+		end++;
+		if (findMatchingSurround(line[end])) {
+			result.end = end - 1;
+			break;
+		}
+	}
+
+	return result;
 }
 
 function expandTo(
@@ -177,11 +207,6 @@ function expandTo(
 	return index;
 }
 
-interface RankedSurround {
-	surround: Surround;
-	rank: number;
-}
-
 function findMatchingSurround(char: string): RankedSurround | null {
 	for (let i = 0; i < SURROUNDS.length; i++) {
 		const s = SURROUNDS[i];
@@ -195,29 +220,4 @@ function findMatchingSurround(char: string): RankedSurround | null {
 
 	console.debug("No surround found for '%s'", char);
 	return null;
-}
-
-function getExpandedBoundary(
-	line: string,
-	currIdx: number,
-	direction: number,
-	limit: number
-): number {
-	let newIdx = currIdx;
-
-	while (newIdx !== limit) {
-		const next = line[newIdx + direction];
-		if (isDelimiter(next)) {
-			break;
-		}
-		newIdx += direction;
-	}
-
-	return newIdx;
-}
-
-function isDelimiter(char: string): boolean {
-	const delims = ["[", "]", ")", ")", " ", "-"];
-
-	return delims.indexOf(char) >= 0;
 }
