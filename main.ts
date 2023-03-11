@@ -18,11 +18,9 @@ interface RankedSurround {
 const SURROUNDS: Surround[] = [
 	{ start: "[", end: "]" },
 	{ start: "(", end: ")" },
-	{ start: " ", end: " " },
-	{ start: "-", end: "-" },
 ];
 
-const DELIMITERS = [":", "/", "\\", "."];
+const DELIMITERS = [":", "/", "\\", ".", " ", "_"];
 
 export default class MyPlugin extends Plugin {
 	async onload() {
@@ -72,7 +70,7 @@ export default class MyPlugin extends Plugin {
 }
 
 function shiftHoriz(line: string, index: number, direction: Direction) {
-	return Math.min(line.length - 1, Math.max(0, index + direction));
+	return Math.min(line.length, Math.max(0, index + direction));
 }
 
 function expand(line: string, start: number, end: number): LineSelection {
@@ -172,18 +170,18 @@ function expandToWord(line: string, index: number): LineSelection {
 		end = index;
 
 	while (start > 0) {
+		if (isDelimiter(line[start - 1])) {
+			result.start = start;
+			break;
+		}
 		start--;
-		if (isDelimiter(line[start])) {
-			result.start = start + 1;
-			break;
-		}
 	}
-	while (end < line.length - 1) {
-		end++;
-		if (isDelimiter(line[end])) {
-			result.end = end;
+	while (end < line.length) {
+		if (isDelimiter(line[end + 1])) {
+			result.end = end + 1;
 			break;
 		}
+		end++;
 	}
 
 	return result;
