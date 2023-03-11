@@ -69,20 +69,32 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
+/**
+ * Shift index by one in the given direction.
+ */
 function shiftHoriz(line: string, index: number, direction: Direction) {
 	return Math.min(line.length, Math.max(0, index + direction));
 }
 
+/**
+ * Expand the region. The dirty work.
+ */
 function expand(line: string, start: number, end: number): LineSelection {
-	if (start === 0 && end === line.length - 1) {
+	if (start === end) {
+		// We have no selection yet. Expand to the word.
+		// This probably needs work for cases where the cursor isn't already in a word.
+		return expandToWord(line, start);
+	}
+
+	if (start === 0 && end === line.length) {
 		console.debug("Can't [yet] beyond the full line");
 		return { start, end };
 	}
 
-	if (start === 0 && end !== 0) {
-		// We're already have a selection beginning at the start and we've asked to expand.
+	if (start === 0 || end === line.length) {
+		// We already have a selection at the edge of the line and we've asked to expand.
 		// TODO: Handle expanding to end of sentence.
-		console.debug("Expanding to end of line");
+		console.debug("Expanding to full line");
 		return { start: 0, end: line.length };
 	}
 
@@ -102,11 +114,6 @@ function expand(line: string, start: number, end: number): LineSelection {
 		console.debug("found right surround", rightSurround.surround);
 	}
 
-	const noSelection = start === end;
-	if (noSelection) {
-		return expandToWord(line, newStart);
-	}
-
 	const sameRank = Boolean(
 		leftSurround &&
 			rightSurround &&
@@ -114,7 +121,7 @@ function expand(line: string, start: number, end: number): LineSelection {
 	);
 	const noRank = Boolean(!leftSurround && !rightSurround);
 
-	if (noSelection || sameRank || noRank) {
+	if (sameRank || noRank) {
 		console.debug(
 			"Surrounds have same rank or no rank. Expanding in both directions."
 		);
