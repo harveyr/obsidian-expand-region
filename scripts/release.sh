@@ -10,4 +10,4 @@ semver=$(jq --raw-output '.version' manifest.json)
 
 echo "Creating release ${semver}"
 
-gh release create "v${semver} main.ts manifest.json"
+gh release create --prerelease "v${semver}" main.ts manifest.json
