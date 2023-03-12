@@ -11,9 +11,12 @@ I intend to use the results for my own purposes.
 I don't intend to maintain this for anyone else,
 but you're welcome to do with it as you please!
 
-Plugin template boilerplate is below.
+## Todo
 
----
+-   [ ] If in a list item, expand to the start of the text first (after the bullet) and then the start of the line.
+-   [ ] Expand to within Markdown bold and italic delimiters
+
+# Plugin template boilerplate
 
 This is a sample plugin for Obsidian (https://obsidian.md).
 

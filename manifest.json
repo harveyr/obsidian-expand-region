@@ -3,7 +3,7 @@
 	"name": "Expand Region",
 	"version": "0.0.8",
 	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
+	"description": "Progressively expand your selection region.",
 	"author": "Harvey Rogers",
 	"authorUrl": "https://github.com/harveyr",
 	"isDesktopOnly": false
