@@ -6,8 +6,8 @@ set -o pipefail
 
 npm version patch
 
-id=$(jq --raw-output '.id' manifest.json)
+semver=$(jq --raw-output '.version' manifest.json)
 
-echo "Creating release ${id}"
+echo "Creating release ${semver}"
 
-gh release create "v${id} main.ts manifest.json"
+gh release create "v${semver} main.ts manifest.json"
