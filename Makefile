@@ -5,9 +5,12 @@ local_dest_path = ~/tmp/ObsidianDev/.obsidian/plugins/obsidian-expand-region/
 dev:
 	npm run dev
 
+.PHONY: release
+release:
+	bash scripts/release.sh
+
 .PHONY: local_install
 local_install:
 	mkdir -p $(local_dest_path)
 	cp main.js $(local_dest_path)
 	cp manifest.json $(local_dest_path)
-
