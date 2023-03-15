@@ -184,8 +184,8 @@ function expandToWord(line: string, index: number): LineSelection {
 		start--;
 	}
 	while (end < line.length) {
-		if (isDelimiter(line[end + 1])) {
-			result.end = end + 1;
+		if (isDelimiter(line[end])) {
+			result.end = end;
 			break;
 		}
 		end++;
