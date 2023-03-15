@@ -18,6 +18,7 @@ interface RankedSurround {
 const SURROUNDS: Surround[] = [
 	{ start: "[", end: "]" },
 	{ start: "(", end: ")" },
+	{ start: "`", end: "`" },
 ];
 
 const DELIMITERS = [":", "/", "\\", ".", " ", "_"];
