@@ -13,11 +13,13 @@ but you're welcome to do with it as you please!
 
 ## Todo
 
-- [ ] Add backtick to delimiters
-- [ ] If at end of word before a space, select prior word instead both words
 - [ ] If in a list item, expand to the start of the text first (after the bullet) and then the start of the line.
 - [ ] Expand to within Markdown bold and italic delimiters
 - [ ] After selection reaches end of line, select entire line
+
+- [x] Add backtick to delimiters
+- [x] If at end of word before a space, select prior word instead both words
+
 
 # Plugin template boilerplate
 
