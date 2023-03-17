@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-expand-region",
 	"name": "Expand Region",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"minAppVersion": "0.15.0",
 	"description": "Progressively expand your selection region.",
 	"author": "Harvey Rogers",
