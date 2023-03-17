@@ -15,10 +15,14 @@ interface RankedSurround {
 	rank: number;
 }
 
+// TODO: I'm not sure this is the right approach. To be rethought.
 const SURROUNDS: Surround[] = [
 	{ start: "[", end: "]" },
 	{ start: "(", end: ")" },
 	{ start: "`", end: "`" },
+	{ start: "=", end: "=" },
+	{ start: "*", end: "*" },
+	{ start: "_", end: "_" },
 ];
 
 const DELIMITERS = [":", "/", "\\", ".", " ", "_"];
