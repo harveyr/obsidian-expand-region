@@ -181,6 +181,12 @@ function expandToWord(line: string, index: number): LineSelection {
 	let start = index,
 		end = index;
 
+	// Case: Cursor at end of line after a delimiter, like a period.
+	if (start === line.length && isDelimiter(line[start - 1])) {
+		// Bump start back so we select the period word.
+		start--;
+	}
+
 	while (start > 0) {
 		if (isDelimiter(line[start - 1])) {
 			result.start = start;
